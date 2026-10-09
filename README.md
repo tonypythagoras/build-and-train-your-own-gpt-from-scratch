@@ -31,6 +31,7 @@ Build and train a modern Large Language Model (LLM) from scratch. Clear explanat
 
 
 
+
 # 📘 Chapter 1: Introduction
 
 ## 🔤 Tokenization
@@ -68,3 +69,17 @@ print(x)
 # Chapter 3: Building Neural Networks
 
 Implement the core building blocks of a language model.
+
+
+
+
+
+<div align="center">
+
+![Book Cover](assets/book-cover.png)
+
+# 📘 Building Large Language Models from Scratch
+
+*A practical textbook with clear explanations and well-commented code.*
+
+</div>
