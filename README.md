@@ -74,12 +74,3 @@ Implement the core building blocks of a language model.
 
 
 
-<div align="center">
-
-![Book Cover](assets/book-cover.png)
-
-# 📘 Building Large Language Models from Scratch
-
-*A practical textbook with clear explanations and well-commented code.*
-
-</div>
