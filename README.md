@@ -13,3 +13,43 @@ Build and train a modern Large Language Model (LLM) from scratch. Clear explanat
 [Getting Started](#-getting-started) · [Contents](#-table-of-contents) · [Examples](#-code-examples)
 
 </div>
+
+
+
+
+
+# 📚 Table of Contents
+
+- [Chapter 1: Introduction](#chapter-1-introduction)
+- [Chapter 2: Understanding Tensors](#chapter-2-understanding-tensors)
+- [Chapter 3: Building Neural Networks](#chapter-3-building-neural-networks)
+- [Chapter 4: Implementing Attention](#chapter-4-implementing-attention)
+- [Chapter 5: Building GPT](#chapter-5-building-gpt)
+- [Chapter 6: Training the Model](#chapter-6-training-the-model)
+
+---
+
+# Chapter 1: Introduction
+
+Learn the fundamental concepts behind large language models.
+
+## What You Will Learn
+
+- How language models work
+- How tokens are represented
+- How neural networks learn from data
+
+# Chapter 2: Understanding Tensors
+
+Learn how PyTorch tensors represent and process model data.
+
+```python
+import torch
+
+x = torch.tensor([1.0, 2.0, 3.0])
+print(x)
+```
+
+# Chapter 3: Building Neural Networks
+
+Implement the core building blocks of a language model.
