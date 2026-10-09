@@ -27,6 +27,21 @@ Build and train a modern Large Language Model (LLM) from scratch. Clear explanat
 - [Chapter 5: Building GPT](#chapter-5-building-gpt)
 - [Chapter 6: Training the Model](#chapter-6-training-the-model)
 
+
+
+
+
+# 📘 Chapter 1: Introduction
+
+## 🔤 Tokenization
+
+## 🧠 Neural Network Architecture
+
+## ⚡ Self-Attention
+
+## 🧪 Experiments
+
+## 📝 Exercises
 ---
 
 # Chapter 1: Introduction
