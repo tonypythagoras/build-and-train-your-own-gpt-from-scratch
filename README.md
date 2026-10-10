@@ -4,7 +4,7 @@ Build and train a modern Large Language Model (LLM) from scratch. Clear explanat
 
 <div align="center">
 
-# 📘 Building Large Language Models from Scratch
+# 📘 Build your own Large Language Models from Scratch
 
 ### A Practical, Code-First Guide to Modern LLMs
 
@@ -20,12 +20,12 @@ Build and train a modern Large Language Model (LLM) from scratch. Clear explanat
 
 # 📚 Table of Contents
 
-- [Chapter 1: Introduction](#chapter-1-introduction)
-- [Chapter 2: Understanding Tensors](#chapter-2-understanding-tensors)
-- [Chapter 3: Building Neural Networks](#chapter-3-building-neural-networks)
-- [Chapter 4: Implementing Attention](#chapter-4-implementing-attention)
-- [Chapter 5: Building GPT](#chapter-5-building-gpt)
-- [Chapter 6: Training the Model](#chapter-6-training-the-model)
+- [Stage 1: Introduction](#chapter-1-introduction)
+- [Stage 2: Understanding Tensors](#chapter-2-understanding-tensors)
+- [Stage 3: Building Neural Networks](#chapter-3-building-neural-networks)
+- [Stage 4: Implementing Attention](#chapter-4-implementing-attention)
+- [Stage 5: Building GPT](#chapter-5-building-gpt)
+- [Stage 6: Training the Model](#chapter-6-training-the-model)
 
 
 
