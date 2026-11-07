@@ -2,13 +2,39 @@
 
 ## Table of Contents
 
-1. Introduction
-2. Data Preparation
-3. Model Architecture
-4. Implementing the Model
-5. Pretraining the Model
-6. Post-training the Model
-7. Evaluation and Validation
+- [1. Introduction](#1-introduction)
+- [2. Data Preparation](#2-data-preparation)
+  - [2.1 Data Preprocessing](#data-preprocessing)
+  - [2.2 Downloading Datasets from Hugging Face](#downloading-datasets-from-hugging-face)
+- [3. Coding the LLM Architecture](#coding-the-llm-architecture)
+  - [3.1 Masked Multi-Head Attention](#masked-multi-head-attention)
+  - [3.2 Layer Normalization](#layer-normalization)
+  - [3.3 Transformer Block](#transformer-block)
+  - [3.4 Feed-Forward Network](#feed-forward-network)
+  - [3.5 Linear Output Layer](#linear-output-layer)
+  - [3.6 Residual Connections](#residual-connections)
+  - [3.7 Token Embeddings](#token-embeddings)
+  - [3.8 Positional Embeddings](#positional-embeddings)
+  - [3.9 Dropout](#dropout)
+  - [3.10 Assembling the LLM](#assembling-the-llm)
+- [4. Pretraining](#pretraining)
+  - [4.1 Data Tokenization](#data-tokenization)
+  - [4.2 Data Sampling](#data-sampling)
+  - [4.3 Dataset](#dataset)
+  - [4.4 DataLoader](#dataloader)
+  - [4.5 Data Partitioning](#data-partitioning)
+  - [4.6 Hyperparameters and Training](#hyperparameters-and-training)
+- [5. Post-Training and Fine-Tuning](#post-training-and-fine-tuning)
+  - [5.1 Data Tokenization](#data-tokenization-1)
+  - [5.2 Choosing a Prompt Style](#choosing-a-prompt-style)
+  - [5.3 Implementing a Prompt Formatting Function](#implementing-a-prompt-formatting-function)
+  - [5.4 Data Sampling for Post-Training](#data-sampling-for-post-training)
+    - [Creating the Dataset](#creating-the-dataset)
+    - [Creating the DataLoader](#creating-the-dataloader)
+    - [Creating a Custom Collate Function](#creating-a-custom-collate-function)
+    - [Creating a DataLoader with the Custom Collate Function](#creating-a-dataloader-with-the-custom-collate-function)
+  - [5.5 Data Partitioning](#data-partitioning-1)
+  - [5.6 Hyperparameter Configuration and Training](#hyperparameter-configuration-and-training)
 
 
 
