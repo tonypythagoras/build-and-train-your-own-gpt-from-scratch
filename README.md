@@ -140,10 +140,12 @@ dataset = load_dataset(
 )
 ```
 
-val_dataset = load_dataset(
+```python
+dataset = load_dataset(
     "roneneldan/TinyStories",
     split="validation"
 )
+```
 
 To download **Stanford Alpaca** from Hugging Face for post-training and fine-tuning, use the following code snippet:
 
