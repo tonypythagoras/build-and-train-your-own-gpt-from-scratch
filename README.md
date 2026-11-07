@@ -155,7 +155,7 @@ dataset = load_dataset("tatsu-lab/alpaca", split="train")
 
 Then, split the dataset into training and validation sets using the following code snippet:
 
-Split into 90% training and 10% validation
+```python
 dataset = dataset.train_test_split(
     test_size=0.1,
     seed=42
@@ -164,7 +164,7 @@ dataset = dataset.train_test_split(
 Access the splits
 train_dataset = dataset["train"]
 val_dataset = dataset["test"]
-
+```
 
 
 
