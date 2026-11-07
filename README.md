@@ -188,7 +188,8 @@ The original Transformer architecture, as presented in the paper, is shown below
 
 The architecture of GPT-2 is shown below:
 
-{}
+![Original Transformer Architecture](./images/gpt2.jpeg)
+
 
 The GPT-2 architecture consists of several major components:
 
