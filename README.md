@@ -145,11 +145,7 @@ val_dataset = load_dataset(
 
 To download **Stanford Alpaca** from Hugging Face for post-training and fine-tuning, use the following code snippet:
 
-# 🎯 Load the Stanford Alpaca training dataset from Hugging Face
-dataset = load_dataset(
-    "tatsu-lab/alpaca",  # 📦 Hugging Face dataset repository
-    split="train"       # 🏋️ Load the training split
-)
+
 
 Then, split the dataset into training and validation sets using the following code snippet:
 
