@@ -133,13 +133,11 @@ For this tutorial, we will download all our datasets from Hugging Face.
 
 To download **TinyStories** from Hugging Face for pretraining, use the following code snippet:
 
-# Load the TinyStories dataset
 dataset = load_dataset(
     "roneneldan/TinyStories",
     split="train"
 )
 
-# Load validation dataset
 val_dataset = load_dataset(
     "roneneldan/TinyStories",
     split="validation"
@@ -151,13 +149,13 @@ dataset = load_dataset("tatsu-lab/alpaca", split="train")
 
 Then, split the dataset into training and validation sets using the following code snippet:
 
-# Split into 90% training and 10% validation
+Split into 90% training and 10% validation
 dataset = dataset.train_test_split(
     test_size=0.1,
     seed=42
 )
 
-# Access the splits
+Access the splits
 train_dataset = dataset["train"]
 val_dataset = dataset["test"]
 
