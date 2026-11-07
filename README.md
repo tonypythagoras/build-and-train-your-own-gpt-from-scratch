@@ -228,13 +228,6 @@ $$
 - $\sqrt{d_k}$: Scaling factor
 - $softmax$: Normalizes attention scores into probabilities
 
-
-Where:
-- Q = Query
-- K = Key
-- V = Value
-- \(d_k\) = Dimension of the key vectors.
-
 This formula captures the core operation of the attention mechanism.
 
 Below is the implementation of the masked attention mechanism:
