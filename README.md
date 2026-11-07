@@ -211,20 +211,23 @@ Masked Multi-Head Attention is a mechanism that allows a language model to learn
 It is one of the most important components of GPT-style Transformers.
 
 The attention formula is:
+
 ### Scaled Dot-Product Attention
 
-The scaled dot-product attention mechanism is mathematically defined as:
+The mathematical representation of the scaled dot-product attention mechanism is:
 
 $$
-\boxed{
-\operatorname{Attention}(Q,K,V)
-=
-\operatorname{softmax}
-\left(
-\frac{QK^{T}}{\sqrt{d_k}}
-\right)V
-}
+Attention(Q,K,V) = softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V
 $$
+
+**Where:**
+- $Q$: Query matrix
+- $K$: Key matrix
+- $V$: Value matrix
+- $d_k$: Dimension of the key vectors
+- $\sqrt{d_k}$: Scaling factor
+- $softmax$: Normalizes attention scores into probabilities
+
 
 Where:
 - Q = Query
