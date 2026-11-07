@@ -133,10 +133,12 @@ For this tutorial, we will download all our datasets from Hugging Face.
 
 To download **TinyStories** from Hugging Face for pretraining, use the following code snippet:
 
+```python
 dataset = load_dataset(
     "roneneldan/TinyStories",
     split="train"
 )
+```
 
 val_dataset = load_dataset(
     "roneneldan/TinyStories",
