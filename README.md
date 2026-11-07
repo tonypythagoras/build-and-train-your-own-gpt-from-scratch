@@ -182,7 +182,7 @@ Modern LLMs experienced a significant leap in capabilities and popularity when r
 
 The original Transformer architecture, as presented in the paper, is shown below:
 
-![Original Transformer Architecture](./images/transformer_architecture.png)
+![Original Transformer Architecture](./images/trans.png)
 
 *Figure 1: The Transformer architecture (Vaswani et al., 2017).*
 
