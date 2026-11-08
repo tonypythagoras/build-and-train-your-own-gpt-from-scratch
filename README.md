@@ -204,6 +204,20 @@ The GPT-2 architecture consists of several major components:
 
 We will implement these components one after another, starting with Masked Multi-Head Attention.
 
+All the components share this cofiguration code:
+```python
+CONFIG={"vocab_size":50257,
+        "embed_dim":768,
+        "con_length":1024,
+        "n_heads":12,
+        "n_layers":12,
+        "drop_rate":0.1,
+        "qkv_bias":False
+}
+```
+
+
+
 ## Masked Multi-Head Attention
 
 Masked Multi-Head Attention is a mechanism that allows a language model to learn relationships between tokens while preventing each token from attending to future tokens.
@@ -232,7 +246,46 @@ This formula captures the core operation of the attention mechanism.
 
 Below is the implementation of the masked attention mechanism:
 
-{}
+```python
+
+class MultiHeadAttention(nn.Module):
+       def __init__(self,config):
+              super().__init__()
+              self.n_heads=config["n_heads"]
+              self.n_out=config["embed_dim"]
+              self.head_dim=self.n_out//self.n_heads
+              self.dropout=nn.Dropout(config["drop_rate"])
+              self.out_proj=nn.Linear(config["embed_dim"],config["embed_dim"])
+              self.W_query=nn.Linear(config["embed_dim"],config["embed_dim"])
+              self.W_key=nn.Linear(config["embed_dim"],config["embed_dim"])
+              self.W_value=nn.Linear(config["embed_dim"],config["embed_dim"])
+              self.register_buffer('mask',
+                                   torch.triu(torch.ones(config["con_length"],config["con_length"]),
+                                   diagonal=1))
+
+       def forward(self,x):
+              batch,num_tok,tok_dim=x.shape
+              query=self.W_query(x)
+              key=self.W_key(x)
+              value=self.W_value(x)
+              key=key.view(batch, num_tok,self.n_heads,self.head_dim)
+              query=query.view(batch, num_tok,self.n_heads,self.head_dim)
+              value=value.view(batch, num_tok,self.n_heads,self.head_dim)
+              query=query.transpose(1,2)
+              key=key.transpose(1,2)
+              value=value.transpose(1,2)
+              att_score=query @ key.transpose(2,3)
+              mask_bool=self.mask.bool()[:num_tok, :num_tok]
+              att_score.masked_fill_(mask_bool,-torch.inf)
+              att_weigth=torch.softmax(att_score/key.shape[-1]**0.5,dim=-1)
+              att_weigth=self.dropout(att_weigth)
+              context_vec=att_weigth @ value
+              context_vec=context_vec.transpose(1,2)
+              context_vec=context_vec.contiguous().view(batch,num_tok,self.n_out)
+              output_vec=self.out_proj(context_vec)
+              return output_vec
+
+```
 
 ## Layer Normalization
 
@@ -242,7 +295,23 @@ It helps stabilize and improve the training process by keeping activation values
 
 The implementation of Layer Normalization is shown below:
 
-{}
+```python
+class LayerNorm(nn.Module):
+       def __init__(self,config):
+              super().__init__()
+              self.eps=1e-5
+              self.scale=nn.Parameter(torch.ones(config["embed_dim"]))
+              self.shift=nn.Parameter(torch.zeros(config["embed_dim"]))
+
+       def forward(self,x):
+              mean=x.mean(dim=-1,keepdim=True)
+              var=x.var(dim=-1,keepdim=True,unbiased=False)
+              x_norm=(x-mean)/torch.sqrt(var+self.eps)
+              output=x_norm * self.scale + self.shift
+              return output     
+
+
+```
 
 ## Transformer Block
 
@@ -257,7 +326,34 @@ A Transformer block consists of the following key components:
 
 The implementation of the Transformer block is shown below:
 
-{}
+```python
+
+class TransfomerBlock(nn.Module):
+       def __init__(self,config):
+              super().__init__()
+              self.layer_norm1=LayerNorm(config)
+              self.layer_norm2=LayerNorm(config)
+              self.dropout=nn.Dropout(config["drop_rate"])
+              self.multi_head_att=MultiHeadAttention(config)
+              self.ffn=FFN(config)
+
+
+       def forward(self,x):
+              residual1=x
+              x=self.layer_norm1(x)
+              x=self.multi_head_att(x)
+              x=self.dropout(x)
+              x=x+residual1
+
+              residual2=x
+
+              x=self.layer_norm2(x)
+              x=self.ffn(x)
+              x=self.dropout(x)
+              output=x+residual2
+              return output
+
+```
 
 ## Feed-Forward Network
 
@@ -267,7 +363,21 @@ It further processes each token independently after the attention mechanism has 
 
 The implementation of the Feed-Forward Network is shown below:
 
-{}
+```python
+
+class FFN(nn.Module):
+       def __init__(self, config):
+              super().__init__()
+              self.seq=nn.Sequential(
+                     nn.Linear(config["embed_dim"],4*config["embed_dim"]),
+                     nn.GELU(),
+                     nn.Linear(4*config["embed_dim"],config["embed_dim"]))
+
+       def forward(self,x):
+           return self.seq(x)               
+
+
+```
 
 ## Linear Output Layer
 
@@ -277,7 +387,10 @@ These scores represent how likely each vocabulary token is to be the next token 
 
 The implementation of the Linear Output Layer is shown below:
 
-{}
+```python
+nn.Linear(config["embed_dim"],config["vocab_size"])
+
+```
 
 ## Residual Connections
 
@@ -303,7 +416,10 @@ Token Embeddings map each token ID to a dense numerical vector that represents i
 
 The implementation of Token Embeddings is shown below:
 
-{}
+```python
+nn.Embedding(config["vocab_size"],config["embed_dim"])
+```
+
 
 ## Positional Embeddings
 
@@ -313,7 +429,10 @@ Without positional information, the model would have difficulty distinguishing b
 
 The implementation of Positional Embeddings is shown below:
 
-{}
+```python
+
+nn.Embedding(config["con_length"],config["embed_dim"])
+```
 
 ## Dropout
 
@@ -323,7 +442,10 @@ It helps prevent a model from relying too heavily on particular neurons during t
 
 The implementation of Dropout is shown below:
 
-{}
+```python
+nn.Dropout(config["drop_rate"])
+
+```
 
 ## Assembling the LLM
 
@@ -331,7 +453,32 @@ Now that we have implemented and understood the individual components, we can as
 
 The implementation of our LLM is shown below:
 
-{}
+```python
+
+class GPT2(nn.Module):
+    def __init__(self,config):
+        super().__init__()
+        self.tok_embed_layer=nn.Embedding(config["vocab_size"],config["embed_dim"])
+        self.pos_embed_layer=nn.Embedding(config["con_length"],config["embed_dim"])
+        self.dropout=nn.Dropout(config["drop_rate"])
+        self.transformer_layer=nn.Sequential(*[TransfomerBlock(config) for _ in range(config["n_heads"])])
+        self.final_layer_norm=MyLayerNorm(config)
+        self.final_output_layer=nn.Linear(config["embed_dim"],config["vocab_size"])
+
+
+    def forward(self,x):
+        batch,num_tok=x.shape
+        tok_embed=self.tok_embed_layer(x)
+        pos_value=torch.arange(num_tok)
+        pos_embed=self.pos_embed_layer(pos_value)
+        x_embed=tok_embed+pos_embed
+        x_token=self.dropout(x_embed)
+        x_token=self.transformer_layer(x_token)
+        x_output=self.final_layer_norm(x_token)
+        logit=self.final_output_layer(x_output)
+        return logit
+
+```
 
 
 
