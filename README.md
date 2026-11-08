@@ -388,7 +388,7 @@ These scores represent how likely each vocabulary token is to be the next token 
 The implementation of the Linear Output Layer is shown below:
 
 ```python
-nn.Linear(config["embed_dim"],config["vocab_size"])
+torch.nn.Linear(config["embed_dim"],config["vocab_size"])
 
 ```
 
@@ -417,7 +417,7 @@ Token Embeddings map each token ID to a dense numerical vector that represents i
 The implementation of Token Embeddings is shown below:
 
 ```python
-nn.Embedding(config["vocab_size"],config["embed_dim"])
+torch.nn.Embedding(config["vocab_size"],config["embed_dim"])
 ```
 
 
@@ -431,7 +431,7 @@ The implementation of Positional Embeddings is shown below:
 
 ```python
 
-nn.Embedding(config["con_length"],config["embed_dim"])
+torch.nn.Embedding(config["con_length"],config["embed_dim"])
 ```
 
 ## Dropout
@@ -443,7 +443,7 @@ It helps prevent a model from relying too heavily on particular neurons during t
 The implementation of Dropout is shown below:
 
 ```python
-nn.Dropout(config["drop_rate"])
+torch.nn.Dropout(config["drop_rate"])
 
 ```
 
@@ -639,6 +639,83 @@ Examples of important training hyperparameters and configurations include:
 8. Dropout Rate
 
 The hyperparameter configuration and training implementation are shown below:
+
+```python
+# The number of times the model sees the same training data
+NUM_EPOCH=4
+WEIGHT_DECAY=0.1
+def get_optimizer(model):
+    no_grad_param=[]
+    grad_param=[]
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        if param.dim()<=1 or "norm" in name.lower() or "bias" in name:
+            no_grad_param.append(param)
+        else:
+            grad_param.append(param)
+
+    return torch.optim.AdamW(
+        [
+            {"params": grad_param, "weight_decay": 0.1},
+            {"params": no_grad_param, "weight_decay": 0.0},
+        ],
+        lr=3e-4,
+        betas=(0.9,0.99),
+        eps=1e-8,)
+
+optimizer=get_optimizer(model)
+
+
+def train_model(model,train_loader,eval_loader,num_epoch,optimizer,tokenizer,sample_text,eval_freq):
+      train_loss=[]
+      eval_loss =[]
+      track_token=[]
+      track_lr=[]
+      global_step=-1
+      token_seen=0
+      total_steps=len(train_loader) * num_epoch
+      warmup_steps=int(0.2*total_steps)
+      peak_lr=optimizer.param_groups[0]["lr"]
+      initial_lr=3e-5
+      min_lr=1e-6
+      lr_inc=(peak_lr-initial_lr)/warmup_steps
+      lr=initial_lr
+
+
+      for _ in range(num_epoch):
+             for inputs,target in train_loader:
+                    optimizer.zero_grad()
+                    if global_step<warmup_steps:
+                           lr=initial_lr+global_step*lr_inc
+                    else:
+                           progress=(global_step-warmup_steps)/(total_steps-warmup_steps)
+                           lr=min_lr+(peak_lr-min_lr) * 0.5*(1 + math.cos(math.pi * progress))
+                                  
+                    for param in optimizer.param_groups:
+                           param["lr"]=lr
+                    track_lr.append(lr)        
+                    loss=get_batch_loss(model=model,inputs=inputs,target=target)
+                    loss.backward()
+                    if global_step > warmup_steps:
+                           torch.nn.utils.clip_grad_norm_(model.parameters(),max_norm=0.1)
+                    optimizer.step()
+                    global_step +=1
+                    token_seen +=inputs.numel()
+                    with open("count.txt", "w") as file:
+                            file.write(str(global_step))
+
+                    if global_step % eval_freq == 0:
+                           tr_loss,ev_loss=evaluate_model(model=model,train_loader=train_loader,eval_loader=eval_loader,num_batches=100)
+                           train_loss.append(tr_loss)
+                           eval_loss.append(ev_loss)
+                           track_token.append(token_seen)
+
+             print_trained_sample(model=model,tokenizer=tokenizer,start_sample=sample_text)
+      return train_loss,eval_loss,track_token,track_lr
+
+
+```
 
 {}
 
