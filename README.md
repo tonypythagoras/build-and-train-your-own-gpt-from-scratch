@@ -515,9 +515,9 @@ For example:
 
 **Note:** We will use Tiktoken in this tutorial.
 
-{}
-
 ```python
+import tiktoken
+tokenizer=tiktoken.get_encoding("gpt2")
 ids = tokenizer.encode(text)
 text = tokenizer.decode(ids)
 ```
@@ -540,7 +540,27 @@ Our custom Dataset class inherits from PyTorch's built-in Dataset class.
 
 The implementation is shown below:
 
-{}
+```python
+
+from torch.utils.data import Dataset
+class MyDataset(Dataset):
+       def __init__(self,txt,tokenizer,max_len,stride):
+              self.input_ids=[]
+              self.target_ids=[]
+              self.token_ids=tokenizer.encode(txt)
+
+              for i  in range(0,len(self.token_ids)-max_len,stride):
+                     input=self.token_ids[i:i+max_len]
+                     target=self.token_ids[i+1:i+max_len+1]
+                     self.input_ids.append(torch.tensor(input))
+                     self.target_ids.append(torch.tensor(target))
+
+       def __getitem__(self, idx):
+               return self.input_ids[idx], self.target_ids[idx]
+       def __len__(self):
+              return len(self.input_ids)
+
+```
 
 ## DataLoader
 
@@ -548,7 +568,21 @@ A DataLoader is a PyTorch utility that efficiently feeds data into a model by gr
 
 Our DataLoader implementation is shown below:
 
-{}
+```python
+from torch.utils.data import DataLoader
+
+def get_data_loader(raw_data,tokenizer,max_len,stride,batch_size,shuffle,num_worker,drop_last):
+       my_dataset=MyDataset(raw_data,tokenizer,max_len,stride)
+       data_loader=DataLoader(
+              my_dataset,
+              batch_size=batch_size,
+              shuffle=shuffle,
+              num_workers=num_worker,
+              drop_last=drop_last               
+       )
+       return data_loader
+
+```
 
 ## Data Partitioning
 
@@ -560,7 +594,34 @@ We partition our dataset into three subsets:
 
 The implementation of data partitioning is shown below:
 
-{}
+```python
+from datasets import load_dataset
+
+# Load raw dataset
+dataset = load_dataset(
+    "roneneldan/TinyStories",
+    split="train"
+)
+
+# First split: 90% training, 10% temporary
+split_1 = dataset.train_test_split(
+    test_size=0.10,
+    seed=42
+)
+
+train_data = split_1["train"]
+temp_data = split_1["test"]
+
+# Second split: Divide temporary data equally
+split_2 = temp_data.train_test_split(
+    test_size=0.50,
+    seed=42
+)
+
+val_data = split_2["train"]
+test_data = split_2["test"]
+
+```
 
 ## Hyperparameters and Training
 
