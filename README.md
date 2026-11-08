@@ -644,6 +644,8 @@ The hyperparameter configuration and training implementation are shown below:
 # The number of times the model sees the same training data
 NUM_EPOCH=4
 WEIGHT_DECAY=0.1
+INITIAL_LR=3e-4
+MIN_LR=1e-6
 def get_optimizer(model):
     no_grad_param=[]
     grad_param=[]
@@ -657,28 +659,25 @@ def get_optimizer(model):
 
     return torch.optim.AdamW(
         [
-            {"params": grad_param, "weight_decay": 0.1},
+            {"params": grad_param, "weight_decay": WEIGHT_DECAY},
             {"params": no_grad_param, "weight_decay": 0.0},
         ],
-        lr=3e-4,
+        lr=INITIAL_LR,
         betas=(0.9,0.99),
         eps=1e-8,)
 
 optimizer=get_optimizer(model)
 
 
-def train_model(model,train_loader,eval_loader,num_epoch,optimizer,tokenizer,sample_text,eval_freq):
-      train_loss=[]
-      eval_loss =[]
-      track_token=[]
-      track_lr=[]
+def train_model(model,train_loader,num_epoch,optimizer,tokenizer):
+      
       global_step=-1
       token_seen=0
       total_steps=len(train_loader) * num_epoch
       warmup_steps=int(0.2*total_steps)
       peak_lr=optimizer.param_groups[0]["lr"]
-      initial_lr=3e-5
-      min_lr=1e-6
+      initial_lr=LR
+      min_lr=MIN_LR
       lr_inc=(peak_lr-initial_lr)/warmup_steps
       lr=initial_lr
 
@@ -701,26 +700,9 @@ def train_model(model,train_loader,eval_loader,num_epoch,optimizer,tokenizer,sam
                            torch.nn.utils.clip_grad_norm_(model.parameters(),max_norm=0.1)
                     optimizer.step()
                     global_step +=1
-                    token_seen +=inputs.numel()
-                    with open("count.txt", "w") as file:
-                            file.write(str(global_step))
-
-                    if global_step % eval_freq == 0:
-                           tr_loss,ev_loss=evaluate_model(model=model,train_loader=train_loader,eval_loader=eval_loader,num_batches=100)
-                           train_loss.append(tr_loss)
-                           eval_loss.append(ev_loss)
-                           track_token.append(token_seen)
-
-             print_trained_sample(model=model,tokenizer=tokenizer,start_sample=sample_text)
-      return train_loss,eval_loss,track_token,track_lr
 
 
 ```
-
-{}
-
-
-
 
 # STAGE IV
 
