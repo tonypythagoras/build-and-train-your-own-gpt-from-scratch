@@ -668,19 +668,25 @@ def get_optimizer(model):
 
 optimizer=get_optimizer(model)
 
+ef get_batch_loss(model,inputs,target):
+       with torch.amp.autocast(device_type="cuda",enabled=True):
 
-def train_model(model,train_loader,num_epoch,optimizer,tokenizer):
+              logit=model(inputs)
+              loss=torch.nn.functional.cross_entropy(logit.flatten(0,1),target.flatten())
+       return loss
+
+def train_model(model,train_loader,num_epoch,optimizer):
       
       global_step=-1
       token_seen=0
       total_steps=len(train_loader) * num_epoch
       warmup_steps=int(0.2*total_steps)
       peak_lr=optimizer.param_groups[0]["lr"]
-      initial_lr=LR
+      initial_lr=INITIAL_LR
       min_lr=MIN_LR
       lr_inc=(peak_lr-initial_lr)/warmup_steps
       lr=initial_lr
-
+      scaler=torch.amp.GradScaler(device="cuda", enabled=True)
 
       for _ in range(num_epoch):
              for inputs,target in train_loader:
@@ -695,12 +701,20 @@ def train_model(model,train_loader,num_epoch,optimizer,tokenizer):
                            param["lr"]=lr
                     track_lr.append(lr)        
                     loss=get_batch_loss(model=model,inputs=inputs,target=target)
-                    loss.backward()
+                    
+                    scaler.scale(loss).backward()
+                    
+                    scaler.unscale_(optimizer)
                     if global_step > warmup_steps:
                            torch.nn.utils.clip_grad_norm_(model.parameters(),max_norm=0.1)
+                    
+                    scaler.step(optimizer)
+                    scaler.update()
+
                     optimizer.step()
                     global_step +=1
-
+                    token_seen +=inputs.numel()
+                  
 
 ```
 
