@@ -710,7 +710,6 @@ def train_model(model,train_loader,num_epoch,optimizer):
                     
                     scaler.step(optimizer)
                     scaler.update()
-
                     optimizer.step()
                     global_step +=1
                     token_seen +=inputs.numel()
@@ -752,17 +751,49 @@ One example is the **Alpaca Prompt Template**, which we will use in this tutoria
 
 An example of a formatted data entry for LLM training is shown below:
 
-{}
+```python
+
+Below is an instruction, write a response that
+accomplishes the task.
+### Instruction:
+What is the correct spelling of the following word.
+### Input:
+Wonderful
+### Response:
+The correct spelling is 'Wonderful.'
+
+```
 
 ## Implementing a Prompt Formatting Function
 
 Our prompt formatting function is shown below:
 
-{}
+```python
+
+def format(entry):
+      instruct=(f"Below is an instruction."
+                f"Write a response that accomplishes the task."
+                f"\n\n### Instruction:\n{entry["instruction"]}"
+                )
+      input=(f"\n\n### Input:\n{entry["input"]}" if entry["input"] else "")
+
+      output=instruct+input
+      return output
+
+```
 
 The resulting formatted input is shown below:
 
-{}
+```python
+
+Below is an instruction. Write a response that
+accomplishes the task.
+### Instruction:
+What is the correct spelling of the following word.
+### Input:
+Accomodation
+
+```
 
 ## Data Sampling for Post-Training
 
@@ -770,7 +801,29 @@ The resulting formatted input is shown below:
 
 Our Dataset implementation is shown below:
 
-{}
+```python
+from torch.utils.data import Dataset
+
+class MyDataset(Dataset):
+      def __init__(self,data,tokenizer):
+            self.data=data
+            self.tokens=[]
+            for entry in data:
+                  instruct=format(entry)
+                  response=f"\n\n### Response:\n{entry["output"]}"
+                  full_text=instruct+response
+                  token=tokenizer.encode(full_text)
+                  self.tokens.append(token)
+                  
+      def __getitem__(self, index):
+            return self.tokens[index]
+      
+
+      def __len__(self):
+            return len(self.data)
+
+
+```
 
 ### Creating the DataLoader
 
@@ -782,13 +835,84 @@ To handle these variable-length sequences, we need a custom **collate function**
 
 Our custom collate function is shown below:
 
-{}
+```python
+from functools import partial
+
+def my_collate_func(batch,pad=50256,maximum=None,ignore=-100):
+      input_ls=[]
+      target_ls=[]
+      longest=max([len(b)+1 for b in batch])
+      for entry in batch:
+             copy=entry.copy()
+             copy +=[pad]
+
+             padded=(copy + [pad]*(longest-len(copy)))
+             input_t=padded[:-1]
+             target_t=padded[1:]
+             input_tensor=torch.tensor(input_t)
+             target_tensor=torch.tensor(target_t)
+             mask=target_tensor==pad
+             indices=torch.nonzero(mask).squeeze()
+             if indices.numel()>1:
+                    target_tensor[indices[1:]]=ignore
+
+             if maximum is not None:
+                    input_tensor=input_tensor[:maximum]
+                    target_tensor=target_tensor[:maximum]
+             input_ls.append(input_tensor)
+             target_ls.append(target_tensor)
+      final_input=torch.stack(input_ls)
+      final_target=torch.stack(target_ls)
+      return final_input,final_target
+
+    def get_collate_fn():
+       collate_fn=partial(
+            my_collate_func,
+            maximum=1024,       
+       )
+       return collate_fn    
+
+```
 
 ### Creating a DataLoader with the Custom Collate Function
 
 Our custom DataLoader implementation is shown below:
 
-{}
+```python
+from torch.utils.data import DataLoader
+
+    train_num=int(len(data)*0.90)
+    test_num=int(len(data)*0.05)
+    val_num=int(len(data)*0.05)
+    train_data=data[:train_num]
+    test_data=data[train_num:train_num+test_num]
+    val_data=data[train_num+test_num:]
+    train_set=MyDataset(train_data,tokenizer)
+    test_set=MyDataset(test_data,tokenizer)
+    val_set=MyDataset(val_data,tokenizer)
+    collate=get_collate_fn()
+    train_loader=DataLoader(
+    dataset=train_set,
+    batch_size=4,
+    shuffle=True,
+    collate_fn=collate,
+    drop_last=True)
+
+    test_loader=DataLoader(
+    dataset=test_set,
+    batch_size=4,
+    shuffle=True,
+    collate_fn=collate,
+    drop_last=True)
+
+    val_loader=DataLoader(
+    dataset=val_set,
+    batch_size=4,
+    shuffle=True,
+    collate_fn=collate,
+    drop_last=True)
+
+```
 
 ## Data Partitioning
 
@@ -800,7 +924,18 @@ We partition our dataset into three subsets:
 
 The implementation of data partitioning is shown below:
 
-{}
+```python
+    train_num=int(len(data)*0.90)
+    test_num=int(len(data)*0.05)
+    val_num=int(len(data)*0.05)
+    train_data=data[:train_num]
+    test_data=data[train_num:train_num+test_num]
+    val_data=data[train_num+test_num:]
+    train_set=MyDataset(train_data,tokenizer)
+    test_set=MyDataset(test_data,tokenizer)
+    val_set=MyDataset(val_data,tokenizer)
+
+```
 
 ## Hyperparameter Configuration and Training
 
