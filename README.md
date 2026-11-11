@@ -1008,7 +1008,11 @@ def train_model(model,device,train_loader,num_epoch,optimizer,tokenizer,sample_t
                     token_seen +=inputs.numel()
 
 ```
-**Note:** The project's dependencies are listed in the `requirements.txt` file. If you use `pip` as your package manager, run:
+### Note: Dependency Installation
+
+The project's dependencies are listed in the `requirements.txt` file.
+
+If you use `pip` as your package manager, run:
 
 ```bash
 pip install -r requirements.txt
