@@ -668,52 +668,65 @@ def get_optimizer(model):
 
 optimizer=get_optimizer(model)
 
-ef get_batch_loss(model,inputs,target):
+def get_batch_loss(model,inputs,target):
        with torch.amp.autocast(device_type="cuda",enabled=True):
 
               logit=model(inputs)
               loss=torch.nn.functional.cross_entropy(logit.flatten(0,1),target.flatten())
        return loss
 
-def train_model(model,train_loader,num_epoch,optimizer):
+def train_model(model,device,train_loader,num_epoch,optimizer,tokenizer,sample_text):
       
       global_step=-1
       token_seen=0
       total_steps=len(train_loader) * num_epoch
       warmup_steps=int(0.2*total_steps)
       peak_lr=optimizer.param_groups[0]["lr"]
-      initial_lr=INITIAL_LR
-      min_lr=MIN_LR
+      initial_lr=3e-5
+      min_lr=1e-6
       lr_inc=(peak_lr-initial_lr)/warmup_steps
       lr=initial_lr
-      scaler=torch.amp.GradScaler(device="cuda", enabled=True)
+
+      use_amp = device.type != "cpu"
+      scaler = torch.amp.GradScaler(device.type, enabled=use_amp) if use_amp else None
 
       for _ in range(num_epoch):
              for inputs,target in train_loader:
+                    inputs = inputs.to(device, non_blocking=True)
+                    target = target.to(device, non_blocking=True)
+
                     optimizer.zero_grad()
                     if global_step<warmup_steps:
                            lr=initial_lr+global_step*lr_inc
                     else:
                            progress=(global_step-warmup_steps)/(total_steps-warmup_steps)
                            lr=min_lr+(peak_lr-min_lr) * 0.5*(1 + math.cos(math.pi * progress))
-                                  
+
                     for param in optimizer.param_groups:
                            param["lr"]=lr
-                    track_lr.append(lr)        
-                    loss=get_batch_loss(model=model,inputs=inputs,target=target)
-                    
-                    scaler.scale(loss).backward()
-                    
-                    scaler.unscale_(optimizer)
+                    with torch.amp.autocast(device.type, enabled=use_amp):
+                      loss=get_batch_loss(model=model,inputs=inputs,target=target)
+                    if scaler:
+                      scaler.scale(loss).backward()
+                    else:
+                      loss.backward()
+
+                    if scaler:
+                      scaler.unscale_(optimizer)
+
                     if global_step > warmup_steps:
                            torch.nn.utils.clip_grad_norm_(model.parameters(),max_norm=0.1)
-                    
-                    scaler.step(optimizer)
-                    scaler.update()
-                    optimizer.step()
+
+                    if scaler:
+                      scaler.step(optimizer)
+                      scaler.update()
+                    else:
+                      optimizer.step()
                     global_step +=1
                     token_seen +=inputs.numel()
-                  
+          
+             print_trained_sample(model=model,tokenizer=tokenizer,start_sample=sample_text)
+
 
 ```
 
@@ -941,7 +954,60 @@ The implementation of data partitioning is shown below:
 
 Our hyperparameter configuration and training implementation are shown below:
 
-{}
+```python
+num_epoch=5
+optimizer=get_optimizer(model)
+def train_model(model,device,train_loader,num_epoch,optimizer,tokenizer,sample_text):
+      
+      global_step=-1
+      token_seen=0
+      total_steps=len(train_loader) * num_epoch
+      warmup_steps=int(0.2*total_steps)
+      peak_lr=optimizer.param_groups[0]["lr"]
+      initial_lr=3e-5
+      min_lr=1e-6
+      lr_inc=(peak_lr-initial_lr)/warmup_steps
+      lr=initial_lr
+
+      use_amp = device.type != "cpu"
+      scaler = torch.amp.GradScaler(device.type, enabled=use_amp) if use_amp else None
+
+      for _ in range(num_epoch):
+             for inputs,target in train_loader:
+                    inputs = inputs.to(device, non_blocking=True)
+                    target = target.to(device, non_blocking=True)
+
+                    optimizer.zero_grad()
+                    if global_step<warmup_steps:
+                           lr=initial_lr+global_step*lr_inc
+                    else:
+                           progress=(global_step-warmup_steps)/(total_steps-warmup_steps)
+                           lr=min_lr+(peak_lr-min_lr) * 0.5*(1 + math.cos(math.pi * progress))
+
+                    for param in optimizer.param_groups:
+                           param["lr"]=lr
+                    with torch.amp.autocast(device.type, enabled=use_amp):
+                      loss=get_batch_loss(model=model,inputs=inputs,target=target)
+                    if scaler:
+                      scaler.scale(loss).backward()
+                    else:
+                      loss.backward()
+
+                    if scaler:
+                      scaler.unscale_(optimizer)
+
+                    if global_step > warmup_steps:
+                           torch.nn.utils.clip_grad_norm_(model.parameters(),max_norm=0.1)
+
+                    if scaler:
+                      scaler.step(optimizer)
+                      scaler.update()
+                    else:
+                      optimizer.step()
+                    global_step +=1
+                    token_seen +=inputs.numel()
+
+```
 
 
 
